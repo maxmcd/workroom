@@ -13,7 +13,9 @@ $(function() {
     editor = CodeMirror.fromTextArea(textarea, {
       lineNumbers: true,
       viewportMargin: Infinity,
-      mode: mixedMode
+      mode: mixedMode,
+      // theme: "base16-tomorrow-dark",
+      autoCloseBrackets: true
     });
 
     function setValue() {

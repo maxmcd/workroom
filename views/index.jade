@@ -1,0 +1,23 @@
+<!doctype html>
+html(ng-app="")
+    head
+        link(type='text/css', rel='stylesheet', href='/normalize.css')
+        link(type='text/css', rel='stylesheet', href='//codemirror.net/lib/codemirror.css')
+        link(type='text/css', rel='stylesheet', href='/style.css')
+
+        script(src="/socket.io/socket.io.js")
+        script(src="//kpdecker.github.io/jsdiff/diff.js")
+        script(src="//codemirror.net/lib/codemirror.js")
+        script(src="http://codemirror.net/mode/vbscript/vbscript.js")
+        script(src="http://codemirror.net/mode/css/css.js")
+        script(src="//codemirror.net/mode/xml/xml.js")
+        script(src="//codemirror.net/mode/htmlmixed/htmlmixed.js")
+        script(src="//code.jquery.com/jquery-2.1.1.min.js")
+        script(src="app.js")
+        title codeeditor
+    body.center
+        h1 codeeditor
+        textarea#editor= content
+
+
+        iframe#view(style='width:100%;border:1px dotted gray;height:900px;')

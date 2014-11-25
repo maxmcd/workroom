@@ -18,16 +18,22 @@ $(function() {
       autoCloseBrackets: true
     });
 
+
+    var timeout
     function setValue() {
-        var html = editor.doc.getValue();
-        var encodedHtml = encodeURIComponent(html);
-        document.getElementById('view').src = "data:text/html," + encodedHtml;  
+        window.clearTimeout(timeout)
+        timeout = window.setTimeout(function() {
+            var html = editor.doc.getValue();
+            var encodedHtml = encodeURIComponent(html);
+            document.getElementById('view').src = "data:text/html," + encodedHtml;              
+        }, 1000)
     }
     setValue()
 
     var text = $('#content').html()
     editor.doc.on('change', function(codemirror, changeObj) {
         setValue()
+        console.log()
         if (changeObj.origin != 'remote') {
             socket.emit('change', {
                 change: changeObj,

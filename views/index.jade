@@ -1,23 +1,17 @@
 <!doctype html>
 html(ng-app="")
     head
-        link(type='text/css', rel='stylesheet', href='/normalize.css')
-        link(type='text/css', rel='stylesheet', href='//codemirror.net/lib/codemirror.css')
-        link(type='text/css', rel='stylesheet', href='//codemirror.net/theme/neo.css')
-        link(type='text/css', rel='stylesheet', href='/style.css')
+        title workroom
+
+        != css("app")
 
         script(src="/socket.io/socket.io.js")
-        script(src="//kpdecker.github.io/jsdiff/diff.js")
-        script(src="//codemirror.net/lib/codemirror.js")
-        script(src="http://codemirror.net/mode/vbscript/vbscript.js")
-        script(src="http://codemirror.net/mode/css/css.js")
-        script(src="//codemirror.net/mode/xml/xml.js")
-        script(src="//codemirror.net/mode/javascript/javascript.js")
-        script(src="//codemirror.net/mode/htmlmixed/htmlmixed.js")
-        script(src="//codemirror.net/addon/edit/closebrackets.js")
-        script(src="//code.jquery.com/jquery-2.1.1.min.js")
-        script(src="app.js")
-        title codeeditor
+        != js("app")
+
     body.center
-        textarea#editor= content
+        div.header
+            h1 workroom
+        div.editor-container
+            textarea#editor= content
+            div.resize
         iframe#view

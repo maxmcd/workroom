@@ -1,5 +1,7 @@
 express = require('express')
 app = express()
+app.use(require("connect-assets")())
+
 http = require('http')
 server = http.Server(app)
 io = require('socket.io')(server)
@@ -12,8 +14,6 @@ app.set('views', './views')
 
 app.set('view engine', 'jade')
 app.engine('jade', require('jade').__express);
-
-app.use(express.static(process.cwd() + '/public'));
 
 # server
 server.listen 8000, () ->

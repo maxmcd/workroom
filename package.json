@@ -4,8 +4,10 @@
   "description": "you know",
   "dependencies": {
     "coffee-script": "^1.8.0",
+    "connect-assets": "^4.3.3",
     "express": "^4.9.8",
     "jade": "^1.7.0",
+    "node-sass": "^1.2.3",
     "redis": "^0.12.1",
     "socket.io": "^1.1.0"
   },

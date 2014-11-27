@@ -97,6 +97,29 @@ $ ->
         return 0
 
 
+    rerender_editor_from_queue = () ->
+        history = editor.doc.getHistory()
+    
+        gueue = queue.sort(sort_by_time)
+        console.log(queue)
+
+        scroll_position = editor.getScrollInfo()
+        cursor_position = editor.doc.getCursor()
+
+        editor2.doc.setValue(startcontent)
+        editor2.doc.replaceRange(
+            change.change.text, 
+            change.change.from, 
+            change.change.to, 
+            change.change.origin
+        ) for change in queue
+
+        editor.doc.setValue(editor2.getValue())
+        editor.doc.setHistory(history)
+        editor.doc.setCursor(cursor_position)
+        console.log(scroll_position)
+        editor.scrollTo(scroll_position.left, scroll_position.top)
+
 
     editor.doc.on 'change', (codemirror, changeObj) ->
 
@@ -114,60 +137,40 @@ $ ->
         d = new Date();
         time = d.getTime();
 
-        if changeObj.origin == 'remote'
-            has_remote_edits = true
-
         if changeObj.origin != 'setValue'
             render_iframe_html(1000)
-            d = new Date()
-            queue.push({
-                time: d.getTime(),
-                change: changeObj
-            })
-            if has_remote_edits
-                history = editor.doc.getHistory()
-            
-                gueue = queue.sort(sort_by_time)
-                console.log(queue)
-
-                scroll_position = editor.getScrollInfo()
-                cursor_position = editor.doc.getCursor()
-
-                editor2.doc.setValue(startcontent)
-                editor2.doc.replaceRange(
-                    change.change.text, 
-                    change.change.from, 
-                    change.change.to, 
-                    change.change.origin
-                ) for change in queue
-
-                editor.doc.setValue(editor2.getValue())
-                editor.doc.setHistory(history)
-                editor.doc.setCursor(cursor_position)
-                console.log(scroll_position)
-                editor.scrollTo(scroll_position.left, scroll_position.top)
 
         if (changeObj.origin != 'remote') && (changeObj.origin != 'setValue')
+            d = new Date()
+            change_time = d.getTime()
+            queue.push({
+                time: change_time,
+                change: changeObj
+            })
+            rerender_editor_from_queue()
 
             socket.emit 'change',
                 change: changeObj,
                 all_content: editor.doc.getValue(),
-                time: new Date()
+                time: change_time
 
 
 
-        d = new Date();
-        console.log("time: " + (d.getTime() - time))
 
-    socket.on 'remote_change', (changeObj) ->
-        history = editor.doc.getHistory()
-        editor.doc.replaceRange(
-            changeObj.text, 
-            changeObj.from, 
-            changeObj.to, 
-            'remote'
-        )
-        editor.doc.setHistory(history)
+    socket.on 'remote_change', (change) ->
+        queue.push({
+            time: change.time,
+            change: change.change
+        })
+        rerender_editor_from_queue()
+        # history = editor.doc.getHistory()
+        # editor.doc.replaceRange(
+        #     changeObj.text, 
+        #     changeObj.from, 
+        #     changeObj.to, 
+        #     'remote'
+        # )
+        # editor.doc.setHistory(history)
 
         # var cursor_coords = editor.cursorCoords(changeObj.to)
         # console.log(cursor_coords)

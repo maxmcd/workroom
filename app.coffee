@@ -24,13 +24,12 @@ app.get '/',  (req, res) ->
         res.render('index', {content: reply})
 
 
-
 io.on 'connection', (socket) ->
 
     socket.on 'change', (change) ->
         console.log(change)
         client.set('content', change.all_content, redis.print)
-        socket.broadcast.emit('remote_change', change.change)
+        socket.broadcast.emit('remote_change', {change: change.change, time: change.time})
 
     socket.on 'disconnect', ->
         console.log('a user disconnected')

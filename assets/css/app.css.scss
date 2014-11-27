@@ -16,6 +16,9 @@ body {
   overflow-y: auto;
   overflow-x: auto;
 }
+.hide, .cm-s-default {
+  display: none;
+}
 
 .header, .footer {
     position: absolute;
@@ -24,6 +27,9 @@ body {
 .header {
     height: 40px;
     background: rgba(0, 0, 0, 0.3);
+    a {
+      text-decoration: none;
+    }
     h1 {
       color: white;
       font-size: 20px;

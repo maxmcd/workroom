@@ -25,6 +25,7 @@ $ ->
       $('.resize').removeClass('dragging');
       $('body').removeClass('resizing');
       clicking = false
+      editor.refresh()
 
     $(window).mousemove (e) ->
       if clicking == true
@@ -53,21 +54,24 @@ $ ->
     }
 
     textarea = document.getElementById('editor')
-    editor = CodeMirror.fromTextArea textarea, 
+    window.editor = CodeMirror.fromTextArea textarea, 
         lineNumbers: true,
         viewportMargin: Infinity,
         mode: mixedMode,
         theme: "base16-tomorrow-dark",
         autoCloseBrackets: true
 
+    editor2 = CodeMirror.fromTextArea $('textarea.hide')[0]
+
     $('.editor-container').css('width', window.innerWidth * 0.4)
     $('iframe').css('width', window.innerWidth * 0.6)
+    editor.refresh()
     
     # call this after the editor has been created
 
 
     timeout = null
-    setValue = (duration) ->
+    render_iframe_html = (duration) ->
         window.clearTimeout(timeout)
         timeout = window.setTimeout () ->
             html = editor.doc.getValue()
@@ -76,16 +80,84 @@ $ ->
         , duration
 
     # populate the iframe with intial code
-    setValue(0)
+    render_iframe_html(0)
 
-    text = $('#content').html()
+
+
+    # Init values for changes
+
+    startcontent = editor.doc.getValue()
+    queue = []
+    has_remote_edits = false
+    sort_by_time = (a,b) ->
+        if a.time < b.time
+            return -1
+        if a.time > b.time
+            return 1
+        return 0
+
+
+
     editor.doc.on 'change', (codemirror, changeObj) ->
-        setValue(1000)
-        console.log()
-        if changeObj.origin != 'remote'
+
+        # a change comes in and is added to the queue
+        # if there are no remote changes we don't need 
+        # to do anything
+
+        # if a remote change comes in we add it to the queue
+        # then we sort the queue by timestamp and replay all
+        # changes
+
+        # how do we minimize queue size?
+        # 
+
+        d = new Date();
+        time = d.getTime();
+
+        if changeObj.origin == 'remote'
+            has_remote_edits = true
+
+        if changeObj.origin != 'setValue'
+            render_iframe_html(1000)
+            d = new Date()
+            queue.push({
+                time: d.getTime(),
+                change: changeObj
+            })
+            if has_remote_edits
+                history = editor.doc.getHistory()
+            
+                gueue = queue.sort(sort_by_time)
+                console.log(queue)
+
+                scroll_position = editor.getScrollInfo()
+                cursor_position = editor.doc.getCursor()
+
+                editor2.doc.setValue(startcontent)
+                editor2.doc.replaceRange(
+                    change.change.text, 
+                    change.change.from, 
+                    change.change.to, 
+                    change.change.origin
+                ) for change in queue
+
+                editor.doc.setValue(editor2.getValue())
+                editor.doc.setHistory(history)
+                editor.doc.setCursor(cursor_position)
+                console.log(scroll_position)
+                editor.scrollTo(scroll_position.left, scroll_position.top)
+
+        if (changeObj.origin != 'remote') && (changeObj.origin != 'setValue')
+
             socket.emit 'change',
                 change: changeObj,
-                all_content: editor.doc.getValue()
+                all_content: editor.doc.getValue(),
+                time: new Date()
+
+
+
+        d = new Date();
+        console.log("time: " + (d.getTime() - time))
 
     socket.on 'remote_change', (changeObj) ->
         history = editor.doc.getHistory()

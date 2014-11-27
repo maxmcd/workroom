@@ -86,8 +86,11 @@ $ ->
 
     # Init values for changes
 
+    maximum_latency = 1000
     startcontent = editor.doc.getValue()
     queue = []
+    send_all_content = false
+    remote_edit_timeout = null
     has_remote_edits = false
     sort_by_time = (a,b) ->
         if a.time < b.time
@@ -98,27 +101,28 @@ $ ->
 
 
     rerender_editor_from_queue = () ->
-        history = editor.doc.getHistory()
-    
-        gueue = queue.sort(sort_by_time)
-        console.log(queue)
+        if has_remote_edits
+            history = editor.doc.getHistory()
+        
+            gueue = queue.sort(sort_by_time)
+            console.log(queue)
 
-        scroll_position = editor.getScrollInfo()
-        cursor_position = editor.doc.getCursor()
+            scroll_position = editor.getScrollInfo()
+            cursor_position = editor.doc.getCursor()
 
-        editor2.doc.setValue(startcontent)
-        editor2.doc.replaceRange(
-            change.change.text, 
-            change.change.from, 
-            change.change.to, 
-            change.change.origin
-        ) for change in queue
+            editor2.doc.setValue(startcontent)
+            editor2.doc.replaceRange(
+                change.change.text, 
+                change.change.from, 
+                change.change.to, 
+                change.change.origin
+            ) for change in queue
 
-        editor.doc.setValue(editor2.getValue())
-        editor.doc.setHistory(history)
-        editor.doc.setCursor(cursor_position)
-        console.log(scroll_position)
-        editor.scrollTo(scroll_position.left, scroll_position.top)
+            editor.doc.setValue(editor2.getValue())
+            editor.doc.setHistory(history)
+            editor.doc.setCursor(cursor_position)
+            console.log(scroll_position)
+            editor.scrollTo(scroll_position.left, scroll_position.top)
 
 
     editor.doc.on 'change', (codemirror, changeObj) ->
@@ -149,6 +153,9 @@ $ ->
             })
             rerender_editor_from_queue()
 
+            # logic to occaionally send all content to server
+            # server will save on non-null value.
+
             socket.emit 'change',
                 change: changeObj,
                 all_content: editor.doc.getValue(),
@@ -158,19 +165,29 @@ $ ->
 
 
     socket.on 'remote_change', (change) ->
+        has_remote_edits = true
+
+        window.clearTimeout(remote_edit_timeout)
+        remote_edit_timeout = window.setTimeout ->
+            has_remote_edits = false
+            startcontent = editor.doc.getValue()
+            queue = []
+
+        , maximum_latency
+
         queue.push({
             time: change.time,
             change: change.change
         })
-        rerender_editor_from_queue()
-        # history = editor.doc.getHistory()
-        # editor.doc.replaceRange(
-        #     changeObj.text, 
-        #     changeObj.from, 
-        #     changeObj.to, 
-        #     'remote'
-        # )
-        # editor.doc.setHistory(history)
+        # rerender_editor_from_queue()
+        history = editor.doc.getHistory()
+        editor.doc.replaceRange(
+            change.change.text, 
+            change.change.from, 
+            change.change.to, 
+            'remote'
+        )
+        editor.doc.setHistory(history)
 
         # var cursor_coords = editor.cursorCoords(changeObj.to)
         # console.log(cursor_coords)

@@ -18,6 +18,9 @@ class Editor
         @send_all_content = false
         @remote_edit_timeout = null
         @has_remote_edits = false
+        @save_frequency = 5000
+        @should_save = true
+
         @sort_by_time = (a,b) ->
             if a.time < b.time
                 return -1
@@ -29,6 +32,15 @@ class Editor
 
         @startcontent = @cm.doc.getValue()
 
+        if old_queue?
+            @cm.doc.replaceRange(
+                change.change.text, 
+                change.change.from, 
+                change.change.to, 
+                change.change.origin
+            ) for change in old_queue
+
+
         @enable_resizer(@cm)
         @window_resize_listener()
         @listen_for_local_changes()
@@ -36,6 +48,9 @@ class Editor
         editor = @
         @socket.on 'remote_change', (change) ->
             editor.process_remote_change(change)
+
+
+        @render_iframe_html()
 
 
     render_iframe_html: (duration) ->
@@ -75,6 +90,13 @@ class Editor
         editor = @
         @cm.doc.on 'change', (codemirror, changeObj) ->
 
+            if editor.should_save
+                editor.should_save = false
+                window.setTimeout () ->
+                    editor.socket.emit('save', editor.cm.getValue())
+                    editor.should_save = true
+                , editor.save_frequency
+
             d = new Date()
             time = d.getTime()
 
@@ -103,7 +125,7 @@ class Editor
         if @has_remote_edits
             history = @cm.doc.getHistory()
         
-            @gueue = @queue.sort(sort_by_time)
+            @gueue = @queue.sort(@sort_by_time)
 
             scroll_position = @cm.getScrollInfo()
             cursor_position = @cm.doc.getCursor()

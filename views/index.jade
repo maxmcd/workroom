@@ -5,7 +5,12 @@ html(ng-app="")
 
         != css("app")
 
+        if queue
+            script.
+                old_queue = !{queue}
+
         script(src="/socket.io/socket.io.js")
+
         != js("app")
 
     body.center

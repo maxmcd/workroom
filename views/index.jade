@@ -13,6 +13,8 @@ html(lang="en")
         if queue
             script.
                 old_queue = !{queue}
+        script.
+            room_name = "!{id}"
 
         script(src="/socket.io/socket.io.js")
 

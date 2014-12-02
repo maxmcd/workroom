@@ -10,9 +10,12 @@
 # 
 
 class Editor
-    constructor: (socket) ->   
-
-        @socket = socket
+    constructor: (params={socket: null}) ->   
+        $('#particles-js').remove()
+        $('.text').hide();
+        $('body').addClass('editor')
+        @room_name = params.room_name
+        @socket = params.socket
         @maximum_latency = 1000
         @queue = []
         @send_all_content = false
@@ -47,6 +50,7 @@ class Editor
 
         editor = @
         @socket.on 'remote_change', (change) ->
+            console.log('remote_change')
             editor.process_remote_change(change)
 
 
@@ -64,12 +68,12 @@ class Editor
 
     process_remote_change: (change) ->
         @has_remote_edits = true
-
+        editor = @
         window.clearTimeout(@remote_edit_timeout)
         @remote_edit_timeout = window.setTimeout ->
-            @has_remote_edits = false
-            @startcontent = @cm.doc.getValue()
-            @queue = []
+            editor.has_remote_edits = false
+            editor.startcontent = editor.cm.doc.getValue()
+            editor.queue = []
         , @maximum_latency
 
         @queue.push({
@@ -93,7 +97,10 @@ class Editor
             if editor.should_save
                 editor.should_save = false
                 window.setTimeout () ->
-                    editor.socket.emit('save', editor.cm.getValue())
+                    editor.socket.emit('save', 
+                        content: editor.cm.doc.getValue(), 
+                        room_name: editor.room_name
+                    )
                     editor.should_save = true
                 , editor.save_frequency
 
@@ -115,9 +122,9 @@ class Editor
                 # logic to occaionally send all content to server
                 # server will save on non-null value.
 
-                editor.socket.emit 'change',
+                editor.socket.emit 'change', 
+                    room_name: editor.room_name
                     change: changeObj,
-                    all_content: editor.cm.doc.getValue(),
                     time: change_time
 
 
@@ -194,7 +201,8 @@ class Editor
             viewportMargin: Infinity,
             mode: mixedMode,
             theme: "base16-tomorrow-dark",
-            autoCloseBrackets: true
+            autoCloseBrackets: true,
+            indentUnit: 4
 
         @cm2 = CodeMirror.fromTextArea $('textarea.hide')[0]
 

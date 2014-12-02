@@ -1,4 +1,5 @@
 #= require jquery-2.1.1.min
+#= require particles
 #= require codemirror
 #= require closebrackets
 #= require css
@@ -8,11 +9,32 @@
 #= require vbscript
 #= require htmlmixed
 #= require editor
-
 $ ->
-    $socket = io()
-    $editor = new Editor($socket)
+    
 
+    # $editor = new Editor($socket)
+
+    if room_name
+        $socket = io('/', {query: "room_name=" + room_name});
+        $editor = new Editor(
+            socket: $socket
+            room_name: room_name
+        )
+    else
+        $socket = io()
+
+    $socket.on 'start', (room_name) ->
+        console.log(room_name)
+        history.pushState(null, document.title, '/' + room_name);
+        $editor = new Editor(
+            socket: $socket
+            room_name: room_name
+        )
+        false
+
+
+    $('a.btn').click ->
+        $socket.emit('match')
 
 
 

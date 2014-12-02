@@ -13,18 +13,41 @@ $ ->
     $socket = io()
     $editor = new Editor($socket)
 
-    # Connect to the default socket endpoint
 
-    # Init values for changes
 
-    # var cursor_coords = editor.cursorCoords(changeObj.to)
-    # console.log(cursor_coords)
-    # var fake_cursor = document.createElement('div')
-    # fake_cursor.className = "CodeMirror-cursor"
-    # fake_cursor.innerHTML = "&nbsp;"
-    # fake_cursor.style.top = (cursor_coords.top - 4) + 'px'
-    # fake_cursor.style.left = (cursor_coords.left - 29) + 'px'
-    # fake_cursor.style.height = '13px'
-    # console.log(fake_cursor.style)
 
-    # $('.CodeMirror-cursors').append(fake_cursor)
+    # particles = particlesJS 'particles-js', {
+    #     particles: {
+    #         color: '#fff',
+    #         shape: 'circle', # "circle", "edge" or "triangle"
+    #         opacity: 0.6,
+    #         size: 2,
+    #         size_random: false,
+    #         nb: Math.floor(window.innerWidth/10),
+    #         line_linked: {
+    #             enable_auto: true,
+    #             distance:150,
+    #             color: '#fff',
+    #             opacity: 0.4,
+    #             width: 1,
+    #             condensed_mode: {
+    #                 enable: true,
+    #                 rotateX: 600,
+    #                 rotateY: 600
+    #             }
+    #         },
+    #         anim: {
+    #             enable: true,
+    #             speed: 0.9
+    #         }
+    #     },
+    #     interactivity: {
+    #         enable: true,
+    #         mouse: {
+    #             distance: 200
+    #         },
+    #         detect_on: 'canvas', # "canvas" or "window"
+    #         mode: 'grab'
+    #     },
+    #     retina_detect: true
+    # }

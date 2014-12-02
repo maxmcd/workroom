@@ -1,7 +1,12 @@
 <!doctype html>
-html(ng-app="")
+html(lang="en")
     head
-        title workroom
+        meta(charset="utf-8")
+        meta(http-equiv="X-UA-Compatible" content="IE=edge")
+        title Workroom
+        meta(name="description" content="")
+        meta(name="viewport" content="width=device-width, initial-scale=1")
+        link(rel="icon" href="favicon.png")
 
         != css("app")
 
@@ -14,12 +19,19 @@ html(ng-app="")
         != js("app")
 
     body.center
+        div#particles-js
+        .text
+            div
+                div
+                    h1 workroom
+                    a.btn start
+
         div.header
             a(href="")
                 h1 workroom
         div.editor-container
             textarea#editor= content
             div.resize
-        iframe#view
+        iframe#view.view
         textarea.hide
 

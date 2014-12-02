@@ -1,6 +1,14 @@
 express = require('express')
 app = express()
+logger = require('morgan')
+app.use(logger('dev',  {
+    skip: (req, res) ->  
+        req.url.indexOf('/assets/') != -1
+        # false
+
+}))
 app.use(require("connect-assets")())
+app.use(express.static(process.cwd() + '/public'))
 
 http = require('http')
 server = http.Server(app)

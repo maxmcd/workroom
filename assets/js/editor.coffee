@@ -35,8 +35,14 @@ class Editor
 
         @startcontent = @cm.doc.getValue()
 
+        editor = @
+        # time needs to be passed to the old queue, that's
+        # why that fucking error from yesterday was so easy to
+        # fix, all changes are change.change format, because there's 
+        # change.change and change.time, BLAGH!!!!
+
         if old_queue?
-            @cm.doc.replaceRange(
+            editor.cm.doc.replaceRange(
                 change.change.text, 
                 change.change.from, 
                 change.change.to, 
@@ -48,7 +54,6 @@ class Editor
         @window_resize_listener()
         @listen_for_local_changes()
 
-        editor = @
         @socket.on 'remote_change', (change) ->
             console.log('remote_change')
             editor.process_remote_change(change)
@@ -80,6 +85,7 @@ class Editor
             time: change.time,
             change: change.change
         })
+        console.log(change)
         # rerender_editor_from_queue()
         history = @cm.doc.getHistory()
         @cm.doc.replaceRange(
@@ -113,10 +119,11 @@ class Editor
             if (changeObj.origin != 'remote') && (changeObj.origin != 'setValue')
                 d = new Date()
                 change_time = d.getTime()
-                editor.queue.push({
+                change_and_time_obj = {
                     time: change_time,
                     change: changeObj
-                })
+                }
+                editor.queue.push(change_and_time_obj)
                 editor.rerender_editor_from_queue()
 
                 # logic to occaionally send all content to server
@@ -124,7 +131,7 @@ class Editor
 
                 editor.socket.emit 'change', 
                     room_name: editor.room_name
-                    change: changeObj,
+                    change: change_and_time_obj,
                     time: change_time
 
 

@@ -6,7 +6,7 @@
 body {
     background: url('https://workroom.io/chalkboard.jpg');
     &.editor {
-      iframe.view, .CodeMirror, textarea, .header {
+      iframe.view, .CodeMirror, textarea, .header, .editor-container {
         display: block;
       }      
     }
@@ -22,7 +22,7 @@ body {
     opacity: 0.5;
 }
 
-iframe.view, .CodeMirror, textarea, .header {
+iframe.view, .CodeMirror, textarea, .header, .editor-container {
   display: none;
 }
 

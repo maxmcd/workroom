@@ -62,7 +62,7 @@ app.get '/:id',  (req, res) ->
         console.log(reply)
         if reply
             content = reply
-            redis_client.get "queue", (err, reply) ->
+            redis_client.get (room_name + "_queue"), (err, reply) ->
                 queue = reply
                 room_object = {
                     content: content, 
@@ -118,15 +118,13 @@ io.on 'connection', (socket) ->
 
 
     socket.on 'change', (params = {room_name: null, change: null, time: null}) ->
-        socket.broadcast.to(params.room_name).emit('remote_change', {
-            change: params.change
-        })
+        socket.broadcast.to(params.room_name).emit('remote_change', params.change)
         queue.push(params.change)
         queue = queue.sort(sort_by_time)
         redis_client.set(params.room_name + '_queue', JSON.stringify(queue))
 
     socket.on 'save', (params = {content: null, room_name: null}) ->
-        redis_client.set(params.room_name + '_queue', null)
+        redis_client.set(params.room_name + '_queue', '')
         redis_client.set(params.room_name + '_content', params.content, redis.print)
 
     socket.on 'disconnect', ->

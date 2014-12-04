@@ -1,5 +1,6 @@
 #= require jquery-2.1.1.min
 #= require particles
+#= require ace
 #= require codemirror
 #= require closebrackets
 #= require css
@@ -11,12 +12,11 @@
 #= require editor
 $ ->
     
-
     # $editor = new Editor($socket)
 
     if room_name
         $socket = io('/', {query: "room_name=" + room_name});
-        $editor = new Editor(
+        window.$editor = new Editor(
             socket: $socket
             room_name: room_name
         )

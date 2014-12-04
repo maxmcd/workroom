@@ -33,7 +33,7 @@ class Editor
 
         @codemirror_init()
 
-        @startcontent = @cm.doc.getValue()
+        @startcontent = @ace.getValue()
 
         editor = @
         # time needs to be passed to the old queue, that's
@@ -42,20 +42,22 @@ class Editor
         # change.change and change.time, BLAGH!!!!
 
         if old_queue?
-            editor.cm.doc.replaceRange(
-                change.change.text, 
-                change.change.from, 
-                change.change.to, 
-                change.change.origin
-            ) for change in old_queue
+            deltas = []
+            deltas.push(change.change) for change in old_queue
+            @ace.session.doc.applyDeltas([change.change])
+            # editor.ace.doc.replaceRange(
+            #     change.change.text, 
+            #     change.change.from, 
+            #     change.change.to, 
+            #     change.change.origin
+            # ) for change in old_queue
 
 
-        @enable_resizer(@cm)
+        @enable_resizer(@ace)
         @window_resize_listener()
         @listen_for_local_changes()
 
         @socket.on 'remote_change', (change) ->
-            console.log('remote_change')
             editor.process_remote_change(change)
 
 
@@ -64,9 +66,9 @@ class Editor
 
     render_iframe_html: (duration) ->
         window.clearTimeout(@timeout)
-        codemirror = @cm
+        editor = @ace
         @timeout = window.setTimeout () ->
-            html = codemirror.doc.getValue()
+            html = editor.getValue()
             encodedHtml = encodeURIComponent(html)
             document.getElementById('view').src = "data:text/html," + encodedHtml          
         , duration
@@ -77,7 +79,7 @@ class Editor
         window.clearTimeout(@remote_edit_timeout)
         @remote_edit_timeout = window.setTimeout ->
             editor.has_remote_edits = false
-            editor.startcontent = editor.cm.doc.getValue()
+            editor.startcontent = editor.ace.getValue()
             editor.queue = []
         , @maximum_latency
 
@@ -85,43 +87,54 @@ class Editor
             time: change.time,
             change: change.change
         })
-        console.log(change)
+
+        # only doing this on local changes if there are 
+        # remote changes
         # rerender_editor_from_queue()
-        history = @cm.doc.getHistory()
-        @cm.doc.replaceRange(
-            change.change.text, 
-            change.change.from, 
-            change.change.to, 
-            'remote'
-        )
-        @cm.doc.setHistory(history)
+
+        # history = @ace.doc.getHistory()
+        # @ace.doc.replaceRange(
+        #     change.change.text, 
+        #     change.change.from, 
+        #     change.change.to, 
+        #     'remote'
+        # )
+        # @ace.doc.setHistory(history)
+        @remote_change = true
+        @ace.session.doc.applyDeltas([change.change])
+        @remote_change = false
 
     listen_for_local_changes: () ->
         editor = @
-        @cm.doc.on 'change', (codemirror, changeObj) ->
+        @ace.on 'change', (changeObj) ->
 
-            if editor.should_save
+            if !editor.set_value && editor.should_save
                 editor.should_save = false
                 window.setTimeout () ->
                     editor.socket.emit('save', 
-                        content: editor.cm.doc.getValue(), 
+                        content: editor.ace.getValue(), 
                         room_name: editor.room_name
                     )
                     editor.should_save = true
                 , editor.save_frequency
 
-            d = new Date()
-            time = d.getTime()
 
-            if changeObj.origin != 'setValue'
+            if !editor.set_value
                 editor.render_iframe_html(1000)
 
-            if (changeObj.origin != 'remote') && (changeObj.origin != 'setValue')
+            if editor.remote_change || editor.set_value
+                editor.ace.session.$undoManager.$redoStack.pop()
+                editor.ace.session.$undoManager.$undoStack.pop()
+
+
+            if !editor.remote_change && !editor.set_value
+                # user change
+
                 d = new Date()
                 change_time = d.getTime()
                 change_and_time_obj = {
                     time: change_time,
-                    change: changeObj
+                    change: changeObj.data
                 }
                 editor.queue.push(change_and_time_obj)
                 editor.rerender_editor_from_queue()
@@ -134,32 +147,52 @@ class Editor
                     change: change_and_time_obj,
                     time: change_time
 
+            else
+                # other
+
+
+
+
 
     rerender_editor_from_queue: () ->
-        if @has_remote_edits
-            history = @cm.doc.getHistory()
+        # if @has_remote_edits
+            console.log("rerender_editor_from_queue")
+            # history = @ace.doc.getHistory()
         
             @gueue = @queue.sort(@sort_by_time)
 
-            scroll_position = @cm.getScrollInfo()
-            cursor_position = @cm.doc.getCursor()
+            # scroll_position = @ace.getScrollInfo()
+            # cursor_position = @ace.doc.getCursor()
 
-            @cm2.doc.setValue(startcontent)
-            @cm2.doc.replaceRange(
-                change.change.text, 
-                change.change.from, 
-                change.change.to, 
-                change.change.origin
-            ) for change in queue
+            @set_value = true
 
-            @cm.doc.setValue(@cm2.getValue())
-            @cm.doc.setHistory(history)
-            @cm.doc.setCursor(cursor_position)
+            scratch = new ace.EditSession('')
+            scratch.doc.setValue(@startcontent)
+            deltas = []
+            deltas.push(change.change) for change in @queue
+            scratch.doc.applyDeltas([change.change])
 
-            @cm.scrollTo(
-                scroll_position.left, 
-                scroll_position.top
-            )
+            cursor_position = @ace.getCursorPosition()
+            @ace.setValue(scratch.doc.getValue())
+            @ace.moveCursorTo(cursor_position)
+
+            @set_value = false
+
+            # @ace2.doc.replaceRange(
+            #     change.change.text, 
+            #     change.change.from, 
+            #     change.change.to, 
+            #     change.change.origin
+            # ) for change in queue
+
+            # @ace.doc.setValue(@ace2.getValue())
+            # @ace.doc.setHistory(history)
+            # @ace.doc.setCursor(cursor_position)
+
+            # @ace.scrollTo(
+            #     scroll_position.left, 
+            #     scroll_position.top
+            # )
 
     enable_resizer: (codemirror) ->
         clicking = false;
@@ -171,7 +204,7 @@ class Editor
           $('.resize').removeClass('dragging');
           $('body').removeClass('resizing');
           clicking = false
-          codemirror.refresh()
+          # codemirror.refresh()
 
         $(window).mousemove (e) ->
           if clicking == true
@@ -201,19 +234,20 @@ class Editor
                 }
             ]
         }
+        @ace = ace.edit("editor");
 
-        textarea = document.getElementById('editor')
-        @cm = CodeMirror.fromTextArea textarea, 
-            lineNumbers: true,
-            viewportMargin: Infinity,
-            mode: mixedMode,
-            theme: "base16-tomorrow-dark",
-            autoCloseBrackets: true,
-            indentUnit: 4
+        # textarea = document.getElementById('editor')
+        # @ace = CodeMirror.fromTextArea textarea, 
+        #     lineNumbers: true,
+        #     viewportMargin: Infinity,
+        #     mode: mixedMode,
+        #     theme: "base16-tomorrow-dark",
+        #     autoCloseBrackets: true,
+        #     indentUnit: 4
 
-        @cm2 = CodeMirror.fromTextArea $('textarea.hide')[0]
+        # @ace2 = CodeMirror.fromTextArea $('textarea.hide')[0]
 
         $('.editor-container').css('width', window.innerWidth * 0.4)
         $('iframe').css('width', window.innerWidth * 0.6)
-        @cm.refresh()
+        # @ace.refresh()
 

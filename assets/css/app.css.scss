@@ -5,6 +5,7 @@
 
 body {
     background: url('https://workroom.io/chalkboard.jpg');
+    background-color: #333;
     &.editor {
       iframe.view, .CodeMirror, textarea, .header, .editor-container {
         display: block;
@@ -20,6 +21,21 @@ body {
     left: 0px;
     top: 0px;
     opacity: 0.5;
+}
+
+#editor {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  background: transparent;
+  color: white;
+  .ace_gutter {
+    background: rgba(0, 0, 0, 0.3);
+    color: #999;
+  }
+}
+.ace-tm .ace_gutter-active-line {
+  background-color: rgba(0, 0, 0, 0.6) !important;
 }
 
 iframe.view, .CodeMirror, textarea, .header, .editor-container {
@@ -129,10 +145,6 @@ h1 {
       width: 200px;
       right: -100px;
     }
-}
-
-.CodeMirror {
-    left: 0px;
 }
 
 iframe {
